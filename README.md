@@ -60,65 +60,10 @@ The **Provider Directory Validation System** automates this process using AI-dri
 
 **Integration Flow:**  
 ```
-
 User Uploads CSV → Backend validates via APIs → Confidence scores generated →
 Progress Tracker updates → Dashboard visualizes results → Reports generated/exported
-
 ```
 --- 
-
-```markdown
-## 📁 Folder Structure
-
-```
-
-provider-validation/
-├── src/
-│   ├── components/
-│   │   ├── UploadForm.jsx
-│   │   ├── ProvidersTable.jsx
-│   │   ├── ProviderDetailModal.jsx
-│   │   ├── ProgressTracker.jsx
-│   │   ├── ResultsDashboard.jsx
-│   │   ├── ReportsPage.jsx
-│   │   ├── DashboardCards.jsx
-│   │
-│   ├── pages/
-│   │   ├── LandingPage.jsx
-│   │   ├── AboutPage.jsx
-│   │   ├── UploadPage.jsx
-│   │   ├── ProvidersPage.jsx
-│   │   ├── QueuePage.jsx
-│   │   ├── DashboardPage.jsx
-│   │   └── ReportsPage.jsx
-│   │
-│   ├── api/
-│   │   └── apiClient.js
-│   │
-│   ├── assets/
-│   │   └── sample_pdfs/
-│   │
-│   ├── data/
-│   │   └── sample_providers.csv
-│   │
-│   └── utils/
-│       ├── confidenceColors.js
-│       ├── usePolling.js
-│       └── formatAddress.js
-│
-├── mock-server/           # Optional local mock backend
-│   └── server.js
-│
-├── public/
-│
-├── README.md
-└── package.json
-
-```
-```
-
----
-
 
 ## 🧠 How It Works  
 
