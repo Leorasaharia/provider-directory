@@ -73,40 +73,40 @@ Progress Tracker updates → Dashboard visualizes results → Reports generated/
 provider-validation/
 │
 ├── src/
-│   ├── components/
-│   │   ├── UploadForm.jsx
-│   │   ├── ProvidersTable.jsx
-│   │   ├── ProviderDetailModal.jsx
-│   │   ├── ProgressTracker.jsx
-│   │   ├── ResultsDashboard.jsx
-│   │   ├── ReportsPage.jsx
-│   │   └── DashboardCards.jsx
-│   │
-│   ├── pages/
-│   │   ├── LandingPage.jsx
-│   │   ├── AboutPage.jsx
-│   │   ├── UploadPage.jsx
-│   │   ├── ProvidersPage.jsx
-│   │   ├── QueuePage.jsx
-│   │   ├── DashboardPage.jsx
-│   │   └── ReportsPage.jsx
-│   │
-│   ├── api/
-│   │   └── apiClient.js
-│   │
-│   ├── assets/
-│   │   └── sample_pdfs/
-│   │
-│   ├── data/
-│   │   └── sample_providers.csv
-│   │
-│   └── utils/
-│       ├── confidenceColors.js
-│       ├── usePolling.js
-│       └── formatAddress.js
+│ ├── components/
+│ │ ├── UploadForm.jsx
+│ │ ├── ProvidersTable.jsx
+│ │ ├── ProviderDetailModal.jsx
+│ │ ├── ProgressTracker.jsx
+│ │ ├── ResultsDashboard.jsx
+│ │ ├── ReportsPage.jsx
+│ │ └── DashboardCards.jsx
+│ │
+│ ├── pages/
+│ │ ├── LandingPage.jsx
+│ │ ├── AboutPage.jsx
+│ │ ├── UploadPage.jsx
+│ │ ├── ProvidersPage.jsx
+│ │ ├── QueuePage.jsx
+│ │ ├── DashboardPage.jsx
+│ │ └── ReportsPage.jsx
+│ │
+│ ├── api/
+│ │ └── apiClient.js
+│ │
+│ ├── assets/
+│ │ └── sample_pdfs/
+│ │
+│ ├── data/
+│ │ └── sample_providers.csv
+│ │
+│ └── utils/
+│ ├── confidenceColors.js
+│ ├── usePolling.js
+│ └── formatAddress.js
 │
 ├── mock-server/ (optional)
-│   └── server.js
+│ └── server.js
 │
 ├── public/
 │
