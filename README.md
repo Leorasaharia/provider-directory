@@ -1,4 +1,4 @@
-```markdown
+
 # 🩺 Provider Directory Validation System  
 
 ### An AI-powered platform for automating healthcare provider data validation, ensuring accuracy, compliance, and better patient access.  
@@ -69,7 +69,6 @@ Progress Tracker updates → Dashboard visualizes results → Reports generated/
 ---
 
 ## 🗂️ Folder Structure  
-```
 
 provider-validation/
 │
@@ -114,8 +113,6 @@ provider-validation/
 ├── README.md
 │
 └── package.json
-
-````
 
 ---
 
