@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import "./globals.css"
+import NextAuthProvider from "./context/NextAuthProvider" // import your client wrapper
 
 export const metadata: Metadata = {
   title: "Provider Directory Validation",
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        <NextAuthProvider>
+          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        </NextAuthProvider>
         <Analytics />
       </body>
     </html>

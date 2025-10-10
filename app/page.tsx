@@ -1,11 +1,43 @@
+'use client'
+import { useSession, signIn, signOut } from 'next-auth/react'
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 
 export default function Home() {
+
+  const { data: session, status } = useSession()
+
+  if (status === 'loading') return <p>Loading...</p>
+
+  // User not logged in → show login button
+  if (!session) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-background">
+        <h1 className="text-4xl font-bold mb-6 text-foreground">
+          Welcome to Provider Directory
+        </h1>
+        <p className="mb-6 text-muted-foreground">
+          Please login with Google to continue
+        </p>
+        <Button size="lg" onClick={() => signIn('google')}>
+          Login with Google
+        </Button>
+      </div>
+    )
+  }
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
+      <div className="absolute top-4 right-4 z-50">
+      <Button size="sm" onClick={() => signOut()}>
+        Logout
+      </Button>
+    </div>
+    
       <section className="relative overflow-hidden border-b border-border">
         <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
