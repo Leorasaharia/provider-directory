@@ -37,8 +37,9 @@ export async function POST(request: Request) {
     const blob = new Blob([text], { type: "text/csv" })
     fm.append("file", blob, filename)
 
-    // Call local model server (ensure it's running on port 8001)
-    const modelResp = await fetch("http://127.0.0.1:8001/predict_csv", {
+    // Call model server. Use environment variable MODEL_SERVER_URL if provided (server-side only).
+    const modelBase = (process.env.MODEL_SERVER_URL || "http://127.0.0.1:8001").replace(/\/$/, "")
+    const modelResp = await fetch(`${modelBase}/predict_csv`, {
       method: "POST",
       body: fm,
     })
