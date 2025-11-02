@@ -18,6 +18,10 @@ yarn-error.log*
 
 # env files
 .env*
+.env.local
+
+# local secrets (do not commit credentials)
+.env.*.local
 
 # vercel
 .vercel
@@ -25,3 +29,31 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Editor dirs
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
+
+# Build output
+/dist/
+
+# Temp files
+tmp/
+*.swp
+
+# Python model-server artifacts (keep model files out of git)
+model-server/.venv/
+model-server/venv/
+model-server/__pycache__/
+model-server/*.py[cod]
+# If you prefer to track the model in git, remove the lines above that match your model filenames.
+model-server/*.egg-info/
+model-server/.pytest_cache/
+model-server/.mypy_cache/
+model-server/.env
+model-server/.env.local
+
