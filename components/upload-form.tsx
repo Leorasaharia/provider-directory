@@ -105,17 +105,28 @@ export function UploadForm() {
 
     setIsUploading(true)
 
-    // Simulate upload
-    setTimeout(() => {
-      setIsUploading(false)
-      toast({
-        title: "Upload started",
-        description: "Validation running... You'll be redirected to the providers page.",
+    try {
+      const formData = new FormData()
+      formData.append("file", csvFile)
+
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
       })
-      setTimeout(() => {
-        router.push("/providers")
-      }, 1500)
-    }, 2000)
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err?.error || "Upload failed")
+      }
+
+      const data = await res.json()
+      setIsUploading(false)
+      toast({ title: "Upload started", description: "Validation running... Redirecting to progress." })
+      router.push(`/uploads/${data.upload_id}/progress`)
+    } catch (err: any) {
+      setIsUploading(false)
+      toast({ title: "Upload failed", description: err?.message || String(err), variant: "destructive" })
+    }
   }
 
   return (

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { mockProviders, type Provider } from "@/lib/mock-data"
+import { useState, useMemo, useEffect } from "react"
+import type { Provider } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -21,12 +21,60 @@ export function ProvidersTable() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
 
+  const [providers, setProviders] = useState<Provider[]>([])
+
+  useEffect(() => {
+    async function loadProviders() {
+      try {
+        // Fetch uploads, pick latest by started_at
+        const ul = await fetch('/api/uploads')
+        const uploads = await ul.json()
+        if (!uploads || uploads.length === 0) return
+        const latest = uploads.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())[0]
+        const resp = await fetch(`/api/uploads/${latest.upload_id}/progress`)
+        const data = await resp.json()
+        if (data && data.providers) {
+          // Map stored providers to the UI Provider shape (best-effort)
+          const mapped = data.providers.map((p: any) => {
+            const raw = p.raw || {}
+            const get = (keys: string[]) => {
+              for (const k of keys) if (raw[k] || raw[k.toLowerCase()]) return raw[k] ?? raw[k.toLowerCase()]
+              return ""
+            }
+            const name = get(['name', 'provider_name', 'full_name']) || `Provider ${p.id}`
+            const npi = get(['npi', 'npi id', 'npi_id']) || ''
+            const specialty = get(['speciality', 'specialty', 'specialization']) || ''
+            const phoneOriginal = get(['phone no.', 'phone', 'phone_number', 'phone_no']) || ''
+            const phoneValidated = raw['phone_validated'] || raw['phone.validated'] || ''
+            const addressValidated = raw['address_validated'] || raw['address.validated'] || get(['address']) || ''
+            const confidence = typeof p.confidence === 'number' ? p.confidence : 0
+            const status = p.confidence == null ? 'unprocessed' : confidence >= 0.6 ? 'validated' : 'flagged'
+            return {
+              id: p.id,
+              name,
+              npi,
+              specialty,
+              phone: { original: phoneOriginal, validated: phoneValidated },
+              address: { validated: addressValidated },
+              confidence,
+              status,
+            }
+          })
+          setProviders(mapped)
+        }
+      } catch (e) {
+        console.error('Failed to load providers', e)
+      }
+    }
+    loadProviders()
+  }, [])
+
   const filteredAndSortedProviders = useMemo(() => {
-    const filtered = mockProviders.filter((provider) => {
+    const filtered = providers.filter((provider) => {
       const matchesSearch =
         provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        provider.npi.includes(searchQuery) ||
-        provider.specialty.toLowerCase().includes(searchQuery.toLowerCase())
+        (provider.npi || '').includes(searchQuery) ||
+        (provider.specialty || '').toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesStatus = statusFilter === "all" || provider.status === statusFilter
 
@@ -46,7 +94,7 @@ export function ProvidersTable() {
     })
 
     return filtered
-  }, [searchQuery, statusFilter, sortField, sortOrder])
+  }, [providers, searchQuery, statusFilter, sortField, sortOrder])
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {

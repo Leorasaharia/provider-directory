@@ -85,10 +85,35 @@ export default function UploadProgressPage() {
               <p className="text-muted-foreground">Track validation progress in real-time</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                try {
+                  const resp = await fetch(`/api/uploads/${uploadId}/download`)
+                  if (!resp.ok) throw new Error("Download failed")
+                  const blob = await resp.blob()
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `${upload.filename.replace(/\.[^/.]+$/, "")}-results.csv`
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                  URL.revokeObjectURL(url)
+                } catch (e) {
+                  console.error("Download error", e)
+                }
+              }}
+            >
+              Download CSV
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
