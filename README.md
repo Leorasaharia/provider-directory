@@ -215,22 +215,6 @@ Includes:
 
 ---
 
-## 🤝 Contributors
-
-* **Leora Saharia** — Frontend Developer & Project Lead
-* [Add your team members here]
-
----
-
-## 📬 Contact
-
-For inquiries or collaborations:
-📧 **[leora.saharia@example.com](mailto:leora.saharia@example.com)**
-🌐 [LinkedIn Profile or Portfolio link]
-
----
-
-## 🏥 Demo Preview
 
 > 🧠 *“Fixing healthcare data accuracy, one provider at a time.”*
 > Watch the demo video → [Insert Demo Link Here]
