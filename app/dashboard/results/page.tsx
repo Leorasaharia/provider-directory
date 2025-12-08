@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { Navigation } from "@/components/navigation"
 import { GlobalProgressBar } from "@/components/global-progress-bar"
 import { ResultsKpiGrid } from "@/components/results-kpi-grid"
