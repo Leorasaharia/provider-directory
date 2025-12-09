@@ -1,6 +1,6 @@
-// Data models for the new features
+ // Data models for the new features
 
-export interface UploadJob {
+ export interface UploadJob {
   upload_id: string
   filename: string
   total_providers: number
@@ -12,6 +12,39 @@ export interface UploadJob {
   finished_at: string | null
   last_error: string | null
   eta_seconds: number | null
+  avg_confidence?: number | null
+}
+
+export interface ProviderInput {
+  name: string
+  npi: string
+  mobile_no: string
+  address: string
+  speciality: string
+  member_impact: number
+}
+
+export interface FieldWithConfidence {
+  value: string
+  confidence: number
+  note?: string | null
+}
+
+export interface ProviderOutput {
+  name: FieldWithConfidence
+  npi: FieldWithConfidence
+  mobile_no: FieldWithConfidence
+  address: FieldWithConfidence
+  speciality: FieldWithConfidence
+}
+
+export interface ProviderReport {
+  provider_input: ProviderInput
+  provider_output: ProviderOutput
+  status: string
+  reasons: string[]
+  priority_score: number
+  priority_level: "HIGH" | "MEDIUM" | "LOW"
 }
 
 export interface DashboardSummary {

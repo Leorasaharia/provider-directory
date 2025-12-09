@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server"
 import uploadStore from "@/lib/upload-store"
 
-// GET /api/dashboard/trends - Get time-series trend data
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const interval = searchParams.get("interval") || "day"
-  const from = searchParams.get("from")
-  const to = searchParams.get("to")
-
-  // Build simple daily trends from uploads by started_at date
+// GET /api/dashboard/trends - Build simple daily trends from uploads
+export async function GET() {
   const uploads = uploadStore.listUploads()
   const byDate: Record<string, { processed: number; validated: number; flagged: number }> = {}
 

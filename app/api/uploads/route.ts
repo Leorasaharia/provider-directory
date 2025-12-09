@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server"
-import { listUploads, createUploadFromRows, updateUploadResults, getUpload } from "@/lib/upload-store"
+import {
+  listUploads,
+  createUploadFromRows,
+  updateUploadWithReports,
+} from "@/lib/upload-store"
+import { ProviderInput, ProviderReport } from "@/lib/api-types"
+
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000").replace(/\/$/, "")
 
 // GET /api/uploads - List recent upload jobs
 export async function GET() {
@@ -7,7 +14,7 @@ export async function GET() {
   return NextResponse.json(uploads)
 }
 
-// POST /api/uploads - Accept CSV upload, create upload job and call model server
+// POST /api/uploads - Accept CSV upload, send to Flow-1 backend, store results
 export async function POST(request: Request) {
   try {
     const form = await request.formData()
@@ -32,26 +39,30 @@ export async function POST(request: Request) {
 
     const job = createUploadFromRows(filename, rows)
 
-    // Forward CSV to model server for prediction
-    const fm = new FormData()
-    const blob = new Blob([text], { type: "text/csv" })
-    fm.append("file", blob, filename)
+    // Map rows into Flow-1 ProviderInput
+    const providers: ProviderInput[] = rows.map((r) => ({
+      name: r.name ?? r.Name ?? "",
+      npi: r.npi ?? r.NPI ?? "",
+      mobile_no: r.mobile_no ?? r.phone ?? r.mobile ?? "",
+      address: r.address ?? r.Address ?? "",
+      speciality: r.speciality ?? r.specialty ?? "",
+      member_impact: Number(r.member_impact ?? r.Member_Impact ?? 3) || 3,
+    }))
 
-    // Call model server. Use environment variable MODEL_SERVER_URL if provided (server-side only).
-    const modelBase = (process.env.MODEL_SERVER_URL || "http://127.0.0.1:8001").replace(/\/$/, "")
-    const modelResp = await fetch(`${modelBase}/predict_csv`, {
+    // Call Flow-1 backend
+    const resp = await fetch(`${API_BASE}/flow1/validate-batch`, {
       method: "POST",
-      body: fm,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(providers),
     })
 
-    if (!modelResp.ok) {
-      const err = await modelResp.text()
-      return NextResponse.json({ error: "Model server error", details: err }, { status: 502 })
+    if (!resp.ok) {
+      const errText = await resp.text()
+      return NextResponse.json({ error: "Backend error", details: errText }, { status: 502 })
     }
 
-    const predictions = await modelResp.json()
-    // predictions expected: [{ id: number|string, confidence: number }, ...]
-    updateUploadResults(job.upload_id, predictions)
+    const { reports } = (await resp.json()) as { reports: ProviderReport[] }
+    updateUploadWithReports(job.upload_id, reports)
 
     return NextResponse.json({ upload_id: job.upload_id }, { status: 201 })
   } catch (e: any) {

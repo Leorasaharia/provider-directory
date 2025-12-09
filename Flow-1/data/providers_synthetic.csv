@@ -1,0 +1,96 @@
+name,npi,mobile_no,address,speciality,member_impact
+Dr. John Smith,1000000001,+1-555-301-1001,"123 Oak St Springfield IL","Internal Medicine",1
+Dr. REJI ABHILASH,1346743739,+1-240-883-9800,"6209 EXECUTIVE BLVD ROCKVILLEMD 20852-3906","Psychologist",1
+Dr. JOSEPH TAYLOR AARON,1053395590,+1-425-277-0222,"3507 NE SUNSET BLVD RENTON WA 98056-3330","Chiropractor",1
+Dr. Gordon Abrams,1063484491,+1-412-647-3553,"200 LOTHROP ST ROOM 3950 CHP CMT PITTSBURGH PA 15213-2536","Radiology",1
+Dr. David Wilson,1000000005,+1-555-301-1005,"782 Cedar Ln Phoenix AZ","Neurology",1
+Dr. Laura Miller,1000000006,+1-555-301-1006,"98 Grove St Austin TX","Orthopedics",1
+Dr. Daniel Anderson,1000000007,+1-555-301-1007,"340 Birch Blvd Miami FL","Ophthalmology",1
+Dr. Sophia Thomas,1000000008,+1-555-301-1008,"400 Sunrise Ct Portland OR","Pediatrics",1
+Dr. James Jackson,1000000009,+1-555-301-1009,"77 Brookside Rd Madison WI","Endocrinology",2
+Dr. Victoria White,1000000010,+1-555-301-1010,"52 Highland St Omaha NE","Gastroenterology",1
+Dr. Liam Harris,1000000011,+1-555-301-1011,"240 Ridgeview Dr Richmond VA","Internal Medicine",1
+Dr. Grace Martin,1000000012,+1-555-301-1012,"64 Parkside Ave Atlanta GA","Family Medicine",4
+Dr. Henry Lee,1000000013,+1-555-301-1013,"92 Evergreen Pl Boise ID","Cardiology", 1
+Dr. Olivia Perez,1000000014,+1-555-301-1014,"118 Forest Rd Wichita KS","Dermatology", 2
+Dr. Jackson Thompson,1000000015,+1-555-301-1015,"741 Willow Ct Sacramento CA","Neurology",1
+Dr. Natalie Garcia,1000000016,+1-555-301-1016,"56 Sunset Blvd Tulsa OK","Orthopedics",1
+Dr. Ethan Martinez,1000000017,+1-555-301-1017,"88 Glacier Way Salt Lake City UT","Ophthalmology",1
+Dr. Harper Robinson,1000000018,+1-555-301-1018,"39 Meadow Cir Columbus OH","Pediatrics",1
+Dr. Benjamin Clark,1000000019,+1-555-301-1019,"700 Prairie Rd Fargo ND","Endocrinology",4
+Dr. Lily Rodriguez,1000000020,+1-555-301-1020,"51 Riverbend Dr Detroit MI","Gastroenterology", 2
+Dr. Oliver Lewis,1000000021,+1-555-301-1021,"123 Elm St Springfield IL","Internal Medicine", 3
+Dr. Hannah Walker,1000000022,+1-555-301-1022,"45 Pine Ave Dayton OH","Family Medicine", 2
+Dr. William Hall,1000000023,+1-555-301-1023,"87 Maple Rd Albany NY","Cardiology", 1
+Dr. Ava Allen,1000000024,+1-555-301-1024,"16 Lakeview Dr Denver CO","Dermatology", 2
+Dr. Lucas Young,1000000025,+1-555-301-1025,"782 Cedar Ln Phoenix AZ","Neurology", 1
+Dr. Chloe King,1000000026,+1-555-301-1026,"98 Grove St Austin TX","Orthopedics", 1
+Dr. Sebastian Wright,1000000027,+1-555-301-1027,"340 Birch Blvd Miami FL","Ophthalmology", 1
+Dr. Ella Scott,1000000028,+1-555-301-1028,"400 Sunrise Ct Portland OR","Pediatrics",1
+Dr. Alexander Green,1000000029,+1-555-301-1029,"77 Brookside Rd Madison WI","Endocrinology",1
+Dr. Aria Adams,1000000030,+1-555-301-1030,"52 Highland St Omaha NE","Gastroenterology",1
+Dr. Nathan Baker,1000000031,+1-555-301-1031,"240 Ridgeview Dr Richmond VA","Internal Medicine",1
+Dr. Zoe Nelson,1000000032,+1-555-301-1032,"64 Parkside Ave Atlanta GA","Family Medicine",1
+Dr. Matthew Carter,1000000033,+1-555-301-1033,"92 Evergreen Pl Boise ID","Cardiology",1
+Dr. Penelope Mitchell,1000000034,+1-555-301-1034,"118 Forest Rd Wichita KS","Dermatology", 5
+Dr. Joseph Perez,1000000035,+1-555-301-1035,"741 Willow Ct Sacramento CA","Neurology",1
+Dr. Audrey Roberts,1000000036,+1-555-301-1036,"56 Sunset Blvd Tulsa OK","Orthopedics",1
+Dr. Samuel Turner,1000000037,+1-555-301-1037,"88 Glacier Way Salt Lake City UT","Ophthalmology",1
+Dr. Mila Phillips,1000000038,+1-555-301-1038,"39 Meadow Cir Columbus OH","Pediatrics",1
+Dr. Gabriel Campbell,1000000039,+1-555-301-1039,"700 Prairie Rd Fargo ND","Endocrinology",1
+Dr. Nora Parker,1000000040,+1-555-301-1040,"51 Riverbend Dr Detroit MI","Gastroenterology", 2
+Dr. Isaac Evans,1000000041,+1-555-301-1041,"123 Oak St Springfield IL","Internal Medicine", 3
+Dr. Sadie Edwards,1000000042,+1-555-301-1042,"45 Pine Ave Dayton OH","Family Medicine", 5
+Dr. Anthony Collins,1000000043,+1-555-301-1043,"87 Maple Rd Albany NY","Cardiology", 1
+Dr. Ruby Stewart,1000000044,+1-555-301-1044,"16 Lakeview Dr Denver CO","Dermatology", 2
+Dr. Christopher Sanchez,1000000045,+1-555-301-1045,"782 Cedar Ln Phoenix AZ","Neurology" ,1
+Dr. Emilia Morris,1000000046,+1-555-301-1046,"98 Grove St Austin TX","Orthopedics",3
+Dr. Dylan Rogers,1000000047,+1-555-301-1047,"340 Birch Blvd Miami FL","Ophthalmology", 1
+Dr. Lucy Reed,1000000048,+1-555-301-1048,"400 Sunrise Ct Portland OR","Pediatrics", 1
+Dr. Andrew Cook,1000000049,+1-555-301-1049,"77 Brookside Rd Madison WI","Endocrinology", 2
+Dr. Stella Morgan,1000000050,+1-555-301-1050,"52 Highland St Omaha NE","Gastroenterology", 4
+Dr. Evan Bell,1000000051,+1-555-301-1051,"240 Ridgeview Dr Richmond VA","Internal Medicine", 2
+Dr. Hazel Murphy,1000000052,+1-555-301-1052,"64 Parkside Ave Atlanta GA","Family Medicine", 5
+Dr. Julian Bailey,1000000053,+1-555-301-1053,"92 Evergreen Pl Boise ID","Cardiology", 2
+Dr. Paisley Rivera,1000000054,+1-555-301-1054,"118 Forest Rd Wichita KS","Dermatology", 3
+Dr. Leo Cooper,1000000055,+1-555-301-1055,"741 Willow Ct Sacramento CA","Neurology", 4
+Dr. Allison Richardson,1000000056,+1-555-301-1056,"56 Sunset Blvd Tulsa OK","Orthopedics", 2
+Dr. Carter Cox,1000000057,+1-555-301-1057,"88 Glacier Way Salt Lake City UT","Ophthalmology",1
+Dr. Clara Howard,1000000058,+1-555-301-1058,"39 Meadow Cir Columbus OH","Pediatrics", 1
+Dr. Zachary Ward,1000000059,+1-555-301-1059,"700 Prairie Rd Fargo ND","Endocrinology", 2
+Dr. Ellie Torres,1000000060,+1-555-301-1060,"51 Riverbend Dr Detroit MI","Gastroenterology", 2
+Dr. Ryan Peterson,1000000061,+1-555-301-1061,"123 Oak St Springfield IL","Internal Medicine", 3
+Dr. Madeline Gray,1000000062,+1-555-301-1062 ,"45 Pine Ave Dayton OH","Family Medicine", 5
+Dr. Adam Ramirez,1000000063,+1-555-301-1063,"87 Maple Rd Albany NY","Cardiology", 1
+Dr. Vivian James,1000000064,+1-555-301-1064,"16 Lakeview Dr Denver CO","Dermatology", 2
+Dr. Connor Watson,1000000065,+1-555-301-1065,"782 Cedar Ln Phoenix AZ","Neurology", 3
+Dr. Sophie Brooks,1000000066,+1-555-301-1066,"98 Grove St Austin TX","Orthopedics", 4
+Dr. Thomas Kelly,1000000067,+1-555-301-1067,"340 Birch Blvd Miami FL","Ophthalmology", 1
+Dr. Vivian Sanders,1000000068,+1-555-301-1068,"400 Sunrise Ct Portland OR","Pediatrics", 1
+Dr. Charles Price,1000000069,+1-555-301-1069,"77 Brookside Rd Madison WI","Endocrinology", 2
+Dr. Aurora Bennett,1000000070,+1-555-301-1070,"52 Highland St Omaha NE","Gastroenterology", 4        
+Dr. Elijah Wood,1000000071,+1-555-301-1071,"240 Ridgeview Dr Richmond VA","Internal Medicine", 3
+Dr. Isla Barnes,1000000072,+1-555-301-1072,"64 Parkside Ave Atlanta GA","Family Medicine", 5
+Dr. Caleb Ross,1000000073,+1-555-301-1073,"92 Evergreen Pl Boise ID","Cardiology", 1
+Dr. Violet Henderson,1000000074,+1-555-301-1074,"118 Forest Rd Wichita KS","Dermatology", 2
+Dr. Josiah Coleman,1000000075,+1-555-301-1075,"741 Willow Ct Sacramento CA","Neurology", 3
+Dr. Hannah Jenkins,1000000076,+1-555-301-1076,"56 Sunset Blvd Tulsa OK","Orthopedics", 4
+Dr. Lincoln Perry,1000000077,+1-555-301-1077,"88 Glacier Way Salt Lake City UT","Ophthalmology", 1
+Dr. Savannah Powell,1000000078,+1-555-301-1078,"39 Meadow Cir Columbus OH","Pediatrics"   , 1
+Dr. Anthony Long,1000000079,+1-555-301-1079,"700 Prairie Rd Fargo ND","Endocrinology", 2
+Dr. Camila Patterson,1000000080,+1-555-301-1080,"51 Riverbend Dr Detroit MI","Gastroenterology", 2
+Dr. Josie Hughes,1000000081,+1-555-301-1081,"123 Oak St Springfield IL","Internal Medicine", 3
+Dr. Charles Flores,1000000082,+1-555-301-1082,"45 Pine Ave Dayton OH","Family Medicine", 5
+Dr. Ruby Washington,1000000083,+1-555-301-1083,"87 Maple Rd Albany NY","Cardiology", 1
+Dr. Christopher Butler,1000000084,+1-555-301-1084,"16 Lakeview Dr Denver CO","Dermatology", 2
+Dr. Eva Simmons,1000000085,+1-555-301-1085,"782 Cedar Ln Phoenix AZ","Neurology", 3
+Dr. Jaxon Foster,1000000086,+1-555-301-1086,"98 Grove St Austin TX","Orthopedics", 4
+Dr. Scarlett Gonzales,1000000087,+1-555-301-1087,"340 Birch Blvd Miami FL","Ophthalmology", 1
+Dr. Levi Bryant,1000000088,+1-555-301-1088,"400 Sunrise Ct Portland OR","Pediatrics", 1
+Dr. Claire Alexander,1000000089,+1-555-301-1089,"77 Brookside Rd Madison WI","Endocrinology", 2
+Dr. Isaiah Russell,1000000090,+1-555-301-1090,"52 Highland St Omaha NE","Gastroenterology", 2
+Dr. Aurora Griffin,1000000091,+1-555-301-1091,"240 Ridgeview Dr Richmond VA","Internal Medicine", 3
+Dr. Nolan Diaz,1000000092,+1-555-301-1092,"64 Parkside Ave Atlanta GA","Family Medicine", 5
+Dr. Elena Hayes,1000000093,+1-555-301-1093,"92 Evergreen Pl Boise ID","Cardiology", 1
+Dr. Cameron Myers,1000000094,+1-555-301-1094,"118 Forest Rd Wichita KS","Dermatology", 2
+Dr. Sadie Ford,1000000095,+1-555-301-1095,"741 Willow Ct Sacramento CA","Neurology", 3

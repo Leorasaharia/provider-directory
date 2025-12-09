@@ -1,9 +1,15 @@
-import { UploadJob } from "./api-types"
+import {
+  UploadJob,
+  ProviderReport,
+  ProviderOutput,
+  FlaggedProvider,
+} from "./api-types"
 
 type ProviderRow = {
   id: string
   raw: Record<string, string>
   confidence?: number | null
+  report?: ProviderReport
 }
 
 type StoredUpload = UploadJob & {
@@ -30,6 +36,7 @@ export function listUploads(): UploadJob[] {
     finished_at: u.finished_at,
     last_error: u.last_error,
     eta_seconds: u.eta_seconds,
+    avg_confidence: u.avg_confidence ?? null,
   }))
 }
 
@@ -40,7 +47,7 @@ export function getUpload(uploadId: string): StoredUpload | undefined {
 export function createUploadFromRows(filename: string, rows: Record<string, string>[]) {
   const id = makeId()
   const now = new Date().toISOString()
-  const providers = rows.map((r, i) => ({ id: String(i), raw: r, confidence: null }))
+  const providers = rows.map((r, i) => ({ id: String(i), raw: r, confidence: null, report: undefined }))
   const job: StoredUpload = {
     upload_id: id,
     filename,
@@ -60,18 +67,34 @@ export function createUploadFromRows(filename: string, rows: Record<string, stri
   return job
 }
 
-export function updateUploadResults(uploadId: string, confidences: { id: string; confidence: number }[]) {
+function averageFieldConfidence(output: ProviderOutput): number {
+  const fields = [
+    output.name?.confidence ?? 0,
+    output.npi?.confidence ?? 0,
+    output.mobile_no?.confidence ?? 0,
+    output.address?.confidence ?? 0,
+    output.speciality?.confidence ?? 0,
+  ]
+  return fields.length ? fields.reduce((a, b) => a + b, 0) / fields.length : 0
+}
+
+export function updateUploadWithReports(uploadId: string, reports: ProviderReport[]) {
   const job = uploads.get(uploadId)
   if (!job) return
 
-  confidences.forEach((c) => {
-    const p = job.providers.find((x) => x.id === String(c.id))
-    if (p) p.confidence = c.confidence
+  // Map reports back to provider rows
+  reports.forEach((r, idx) => {
+    const p = job.providers[idx]
+    if (!p) return
+    p.report = r
+    const conf = averageFieldConfidence(r.provider_output)
+    p.confidence = conf
   })
 
-  job.processed_count = job.providers.filter((p) => typeof p.confidence === "number").length
-  job.validated_count = job.providers.filter((p) => (p.confidence ?? 0) >= 0.6).length
-  job.flagged_count = job.providers.filter((p) => (p.confidence ?? 0) < 0.6).length
+  job.processed_count = reports.length
+  job.validated_count = reports.filter((r) => r.status === "confirmed" || r.priority_level === "LOW").length
+  job.flagged_count = reports.filter((r) => r.status !== "confirmed" || r.priority_level !== "LOW").length
+
   const confs = job.providers.map((p) => p.confidence ?? 0)
   job.avg_confidence = confs.length ? confs.reduce((a, b) => a + b, 0) / confs.length : null
   job.eta_seconds = 0
@@ -81,13 +104,42 @@ export function updateUploadResults(uploadId: string, confidences: { id: string;
   uploads.set(uploadId, job)
 }
 
-export function createEmptyUpload(filename: string) {
-  return createUploadFromRows(filename, [])
+export function getLatestCompletedUpload(): StoredUpload | undefined {
+  const completed = Array.from(uploads.values()).filter((u) => u.status === "completed")
+  return completed.sort((a, b) => new Date(b.finished_at || b.started_at).getTime() - new Date(a.finished_at || a.started_at).getTime())[0]
+}
+
+export function getFlaggedProvidersFromLatest(limit: number, offset: number): { data: FlaggedProvider[]; total: number } {
+  const latest = getLatestCompletedUpload()
+  if (!latest) return { data: [], total: 0 }
+
+  const flagged = latest.providers
+    .map((p) => p.report)
+    .filter((r): r is ProviderReport => Boolean(r))
+    .filter((r) => r.status !== "confirmed" || r.priority_level === "HIGH")
+    .map((r, idx) => ({
+      id: String(idx),
+      name: r.provider_input.name,
+      npi: r.provider_input.npi,
+      specialty: r.provider_input.speciality,
+      confidence: averageFieldConfidence(r.provider_output),
+      priority_score: r.priority_score,
+      error_types: r.reasons?.length ? r.reasons : ["Needs review"],
+      last_updated: new Date().toISOString(),
+    }))
+    .sort((a, b) => b.priority_score - a.priority_score)
+
+  return {
+    data: flagged.slice(offset, offset + limit),
+    total: flagged.length,
+  }
 }
 
 export default {
   listUploads,
   getUpload,
   createUploadFromRows,
-  updateUploadResults,
+  updateUploadWithReports,
+  getLatestCompletedUpload,
+  getFlaggedProvidersFromLatest,
 }
