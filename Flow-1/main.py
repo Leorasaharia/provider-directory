@@ -11,7 +11,7 @@ app = FastAPI(title="Provider Data Validation – Flow 1")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # for dev; restrict in prod
+    allow_origins=["*"],   # for dev; tighten in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,7 +28,7 @@ def health_check():
 @app.post("/flow1/validate-provider", response_model=ProviderReport)
 def validate_single_provider(provider: ProviderInput):
     """
-    Run Flow-1 for a single provider.
+    Run Flow-1 for a single provider (mainly for testing).
     """
     return orchestrator.run_for_provider(provider)
 
@@ -37,9 +37,14 @@ def validate_single_provider(provider: ProviderInput):
 def validate_batch(providers: List[ProviderInput]):
     """
     Run Flow-1 for a batch of providers.
-    Returns full reports + prioritized human review queue.
+
+    Uses a thread pool under the hood to validate multiple providers
+    in parallel, significantly improving speed for larger batches.
     """
-    reports = orchestrator.run_batch(providers)
+    # You can tweak this number based on performance and rate-limit behavior.
+    max_workers = 8
+
+    reports = orchestrator.run_batch(providers, max_workers=max_workers)
     review_queue = orchestrator.build_review_queue(reports)
     return {
         "reports": [r.model_dump() for r in reports],
