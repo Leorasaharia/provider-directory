@@ -133,8 +133,14 @@ export function updateUploadWithReports(uploadId: string, reports: ProviderRepor
   })
 
   job.processed_count = reports.length
-  job.validated_count = reports.filter((r) => r.status === "confirmed" || r.priority_level === "LOW").length
-  job.flagged_count = reports.filter((r) => r.status !== "confirmed" || r.priority_level !== "LOW").length
+  // Validated: confirmed or updated status (both mean validation passed)
+  // Flagged: needs_review status (requires manual review)
+  job.validated_count = reports.filter((r) => 
+    r.status === "confirmed" || r.status === "updated"
+  ).length
+  job.flagged_count = reports.filter((r) => 
+    r.status === "needs_review"
+  ).length
 
   const confs = job.providers.map((p) => p.confidence ?? 0)
   job.avg_confidence = confs.length ? confs.reduce((a, b) => a + b, 0) / confs.length : null
@@ -168,8 +174,14 @@ export function addReportsToUpload(uploadId: string, reports: ProviderReport[], 
     .map(p => p.report)
     .filter((r): r is ProviderReport => Boolean(r))
   
-  job.validated_count = allProcessedReports.filter((r) => r.status === "confirmed" || r.priority_level === "LOW").length
-  job.flagged_count = allProcessedReports.filter((r) => r.status !== "confirmed" || r.priority_level !== "LOW").length
+  // Validated: confirmed or updated status (both mean validation passed)
+  // Flagged: needs_review status (requires manual review)
+  job.validated_count = allProcessedReports.filter((r) => 
+    r.status === "confirmed" || r.status === "updated"
+  ).length
+  job.flagged_count = allProcessedReports.filter((r) => 
+    r.status === "needs_review"
+  ).length
 
   // Calculate ETA
   if (job.processed_count > 0 && job.total_providers > 0) {
@@ -216,8 +228,14 @@ export function updateUploadWithProvidersAndReports(
   job.providers = providerRows
   job.total_providers = providerRows.length
   job.processed_count = providerRows.length
-  job.validated_count = providers.filter((r) => r.status === "confirmed" || r.priority_level === "LOW").length
-  job.flagged_count = providers.filter((r) => r.status !== "confirmed" || r.priority_level !== "LOW").length
+  // Validated: confirmed or updated status (both mean validation passed)
+  // Flagged: needs_review status (requires manual review)
+  job.validated_count = providers.filter((r) => 
+    r.status === "confirmed" || r.status === "updated"
+  ).length
+  job.flagged_count = providers.filter((r) => 
+    r.status === "needs_review"
+  ).length
 
   const confs = providerRows.map((p) => p.confidence ?? 0)
   job.avg_confidence = confs.length ? confs.reduce((a, b) => a + b, 0) / confs.length : null
@@ -234,29 +252,165 @@ export function getLatestCompletedUpload(): StoredUpload | undefined {
 }
 
 export function getFlaggedProvidersFromLatest(limit: number, offset: number): { data: FlaggedProvider[]; total: number } {
-  const latest = getLatestCompletedUpload()
-  if (!latest) return { data: [], total: 0 }
+  // Get all completed uploads, not just the latest
+  const allCompleted = Array.from(uploads.values())
+    .filter((u) => u.status === "completed")
+    .sort((a, b) => new Date(b.finished_at || b.started_at).getTime() - new Date(a.finished_at || a.started_at).getTime())
 
-  const flagged = latest.providers
-    .map((p) => p.report)
-    .filter((r): r is ProviderReport => Boolean(r))
-    .filter((r) => r.status !== "confirmed" || r.priority_level === "HIGH")
-    .map((r, idx) => ({
-      id: String(idx),
-      name: r.provider_input.name,
-      npi: r.provider_input.npi,
-      specialty: r.provider_input.speciality,
-      confidence: averageFieldConfidence(r.provider_output),
-      priority_score: r.priority_score,
-      error_types: r.reasons?.length ? r.reasons : ["Needs review"],
-      last_updated: new Date().toISOString(),
-    }))
-    .sort((a, b) => b.priority_score - a.priority_score)
+  if (allCompleted.length === 0) return { data: [], total: 0 }
+
+  // Aggregate flagged providers from all completed uploads
+  const allFlagged: FlaggedProvider[] = []
+
+  allCompleted.forEach((upload) => {
+    upload.providers.forEach((p, idx) => {
+      if (!p.report) return
+      
+      const report = p.report
+      // Include flagged providers (needs_review status)
+      if (report.status === "needs_review") {
+        const raw = p.raw || {}
+        
+        // Try to get original mobile from report, or fallback to raw data with various field names
+        const originalMobile = report.provider_input.mobile_no || 
+                              raw.mobile_no || 
+                              raw.phone || 
+                              raw.phone_number || 
+                              raw.mobile ||
+                              raw["phone no."] ||
+                              raw.phone_no ||
+                              ""
+        
+        // Get validated mobile from report output, or use original
+        const validatedMobile = report.provider_output.mobile_no?.value || originalMobile || ""
+        
+        allFlagged.push({
+          id: `${upload.upload_id}::${idx}`,
+          name: report.provider_input.name,
+          npi: report.provider_input.npi,
+          specialty: report.provider_input.speciality,
+          mobile_no: validatedMobile || originalMobile,
+          mobile_no_original: originalMobile,
+          mobile_no_validated: validatedMobile,
+          confidence: averageFieldConfidence(report.provider_output),
+          priority_score: report.priority_score,
+          error_types: report.reasons?.length ? report.reasons : ["Needs review"],
+          last_updated: upload.finished_at || upload.started_at,
+        })
+      }
+    })
+  })
+
+  // Sort by priority score (highest first)
+  allFlagged.sort((a, b) => b.priority_score - a.priority_score)
 
   return {
-    data: flagged.slice(offset, offset + limit),
-    total: flagged.length,
+    data: allFlagged.slice(offset, offset + limit),
+    total: allFlagged.length,
   }
+}
+
+export function getProviderById(providerId: string): { provider: ProviderReport; uploadId: string; index: number } | null {
+  // Provider ID format: uploadId::index
+  const separatorIndex = providerId.lastIndexOf("::")
+  if (separatorIndex === -1) return null
+
+  const uploadId = providerId.substring(0, separatorIndex)
+  const index = Number.parseInt(providerId.substring(separatorIndex + 2))
+
+  if (isNaN(index)) return null
+
+  const upload = getUpload(uploadId)
+  if (!upload || !upload.providers[index] || !upload.providers[index].report) return null
+
+  return {
+    provider: upload.providers[index].report!,
+    uploadId,
+    index,
+  }
+}
+
+export function getAllProvidersForReview(): Array<{ report: ProviderReport; index: number; confidence: number; uploadId: string }> {
+  // Get all completed uploads, not just the latest
+  const allCompleted = Array.from(uploads.values())
+    .filter((u) => u.status === "completed")
+    .sort((a, b) => new Date(b.finished_at || b.started_at).getTime() - new Date(a.finished_at || a.started_at).getTime())
+
+  if (allCompleted.length === 0) return []
+
+  const allProviders: Array<{ report: ProviderReport; index: number; confidence: number; uploadId: string }> = []
+
+  allCompleted.forEach((upload) => {
+    upload.providers.forEach((p, idx) => {
+      if (!p.report) return
+      
+      const report = p.report
+      // Include flagged providers (needs_review status)
+      if (report.status === "needs_review") {
+        allProviders.push({
+          report,
+          index: idx,
+          confidence: p.confidence ?? 0,
+          uploadId: upload.upload_id,
+        })
+      }
+    })
+  })
+
+  // Sort by confidence (lower first) then priority score (higher first)
+  allProviders.sort((a, b) => {
+    if (a.confidence !== b.confidence) return a.confidence - b.confidence
+    return b.report.priority_score - a.report.priority_score
+  })
+
+  return allProviders
+}
+
+// Get all flagged providers across all uploads (for comprehensive results)
+export function getAllFlaggedProviders(): FlaggedProvider[] {
+  const allCompleted = Array.from(uploads.values())
+    .filter((u) => u.status === "completed")
+
+  if (allCompleted.length === 0) return []
+
+  const allFlagged: FlaggedProvider[] = []
+
+  allCompleted.forEach((upload) => {
+    upload.providers.forEach((p, idx) => {
+      if (!p.report) return
+      
+      const report = p.report
+      // Include flagged providers (needs_review status)
+      if (report.status === "needs_review") {
+        const raw = p.raw || {}
+        const originalMobile = report.provider_input.mobile_no || 
+                              raw.mobile_no || 
+                              raw.phone || 
+                              raw.phone_number || 
+                              raw.mobile ||
+                              raw["phone no."] ||
+                              raw.phone_no ||
+                              ""
+        const validatedMobile = report.provider_output.mobile_no?.value || originalMobile || ""
+        
+        allFlagged.push({
+          id: `${upload.upload_id}::${idx}`,
+          name: report.provider_input.name,
+          npi: report.provider_input.npi,
+          specialty: report.provider_input.speciality,
+          mobile_no: validatedMobile || originalMobile,
+          mobile_no_original: originalMobile,
+          mobile_no_validated: validatedMobile,
+          confidence: averageFieldConfidence(report.provider_output),
+          priority_score: report.priority_score,
+          error_types: report.reasons?.length ? report.reasons : ["Needs review"],
+          last_updated: upload.finished_at || upload.started_at,
+        })
+      }
+    })
+  })
+
+  return allFlagged.sort((a, b) => b.priority_score - a.priority_score)
 }
 
 export default {
@@ -270,4 +424,7 @@ export default {
   updateUploadWithProvidersAndReports,
   getLatestCompletedUpload,
   getFlaggedProvidersFromLatest,
+  getProviderById,
+  getAllProvidersForReview,
+  getAllFlaggedProviders,
 }

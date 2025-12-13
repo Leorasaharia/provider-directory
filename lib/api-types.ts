@@ -92,6 +92,9 @@ export interface FlaggedProvider {
   name: string
   npi: string
   specialty: string
+  mobile_no: string
+  mobile_no_original?: string
+  mobile_no_validated?: string
   confidence: number
   priority_score: number
   error_types: string[]

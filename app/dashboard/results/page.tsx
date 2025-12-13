@@ -16,37 +16,54 @@ import { ConfidenceInfoDialog } from "@/components/confidence-info-dialog"
 import { ErrorTypesInfoDialog } from "@/components/error-types-info-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
+import { FlaggedProviderDetailModal } from "@/components/flagged-provider-detail-modal"
 
 export default function ResultsDashboardPage() {
   const [selectedError, setSelectedError] = useState<string | null>(null)
   const [resolvedProviders, setResolvedProviders] = useState<FlaggedProvider[]>([])
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const { data: summary, loading: summaryLoading } = usePolling<DashboardSummary>("/api/dashboard/summary", 10000)
+  const { data: summary, loading: summaryLoading } = usePolling<DashboardSummary>("/api/dashboard/summary", 3000)
 
-  const { data: trends, loading: trendsLoading } = usePolling<TrendPoint[]>("/api/dashboard/trends", 30000)
+  const { data: trends, loading: trendsLoading } = usePolling<TrendPoint[]>("/api/dashboard/trends", 10000)
 
-  const { data: errors, loading: errorsLoading } = usePolling<ErrorCategory[]>("/api/dashboard/errors?limit=6", 30000)
+  const { data: errors, loading: errorsLoading } = usePolling<ErrorCategory[]>("/api/dashboard/errors?limit=6", 10000)
 
   const { data: flaggedData, loading: flaggedLoading } = usePolling<{
     data: FlaggedProvider[]
     total: number
-  }>("/api/flagged?limit=10", 10000)
+  }>("/api/flagged?limit=10", 3000)
 
   const handleErrorClick = (errorType: string) => {
     setSelectedError(errorType)
     // TODO: Filter flagged providers by error type
   }
 
-  const handleMarkResolved = (providerId: string) => {
-    const provider = flaggedData?.data.find((p) => p.id === providerId)
-    if (provider) {
-      setResolvedProviders((prev) => [...prev, provider])
+  const handleMarkResolved = async (providerId: string) => {
+    try {
+      const response = await fetch(`/api/providers/${providerId}/resolve`, { method: "POST" })
+      if (!response.ok) throw new Error("Failed to resolve provider")
+      
+      const provider = flaggedData?.data.find((p) => p.id === providerId)
+      if (provider) {
+        setResolvedProviders((prev) => [...prev, provider])
+        toast({
+          title: "Issue resolved",
+          description: `${provider.name} has been marked as resolved and moved to the Validated tab.`,
+        })
+      }
+    } catch (error) {
       toast({
-        title: "Issue resolved",
-        description: `${provider.name} has been marked as resolved and moved to the Validated tab.`,
+        title: "Error",
+        description: "Failed to resolve provider. Please try again.",
+        variant: "destructive",
       })
     }
+  }
+
+  const handleOpenProvider = (providerId: string) => {
+    setSelectedProviderId(providerId)
   }
 
   if (summaryLoading && !summary) {
@@ -110,7 +127,7 @@ export default function ResultsDashboardPage() {
                 </div>
                 <FlaggedProvidersTable
                   providers={activeFlaggedProviders}
-                  onOpenProvider={(id) => console.log("Open provider:", id)}
+                  onOpenProvider={handleOpenProvider}
                   onMarkResolved={handleMarkResolved}
                 />
               </TabsContent>
@@ -127,7 +144,7 @@ export default function ResultsDashboardPage() {
                 ) : (
                   <FlaggedProvidersTable
                     providers={resolvedProviders}
-                    onOpenProvider={(id) => console.log("Open provider:", id)}
+                    onOpenProvider={handleOpenProvider}
                   />
                 )}
               </TabsContent>
@@ -135,6 +152,10 @@ export default function ResultsDashboardPage() {
           </Card>
         </div>
       </main>
+      <FlaggedProviderDetailModal
+        providerId={selectedProviderId}
+        onClose={() => setSelectedProviderId(null)}
+      />
       <Toaster />
     </div>
   )

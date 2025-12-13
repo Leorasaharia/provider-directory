@@ -1,18 +1,41 @@
+"use client"
+
 import { Navigation } from "@/components/navigation"
 import { GlobalProgressBar } from "@/components/global-progress-bar"
 import { DashboardStats } from "@/components/dashboard-stats"
 import { DashboardChart } from "@/components/dashboard-chart"
-import { mockProviders } from "@/lib/mock-data"
 import { Toaster } from "@/components/ui/toaster"
+import { usePolling } from "@/hooks/use-polling"
+import type { DashboardSummary, TrendPoint } from "@/lib/api-types"
 
 export default function DashboardPage() {
-  const totalProcessed = mockProviders.length
-  const validated = mockProviders.filter((p) => p.status === "validated").length
-  const flagged = mockProviders.filter((p) => p.status === "flagged").length
-  const percentValidated = Math.round((validated / totalProcessed) * 100)
-  const avgConfidence = Math.round(
-    (mockProviders.reduce((sum, p) => sum + p.confidence, 0) / mockProviders.length) * 100,
-  )
+  const { data: summary, loading } = usePolling<DashboardSummary>("/api/dashboard/summary", 3000)
+  const { data: trends } = usePolling<TrendPoint[]>("/api/dashboard/trends", 10000)
+
+  if (loading && !summary) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <GlobalProgressBar />
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 w-64 bg-secondary rounded" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-secondary rounded" />
+              ))}
+            </div>
+          </div>
+        </main>
+        <Toaster />
+      </div>
+    )
+  }
+
+  const totalProcessed = summary?.total_processed || 0
+  const percentValidated = summary?.validated_pct || 0
+  const flagged = summary?.flagged_count || 0
+  const avgConfidence = Math.round((summary?.avg_confidence || 0) * 100)
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,7 +55,7 @@ export default function DashboardPage() {
         />
 
         <div className="mt-8">
-          <DashboardChart />
+          <DashboardChart trends={trends || []} />
         </div>
       </main>
       <Toaster />
