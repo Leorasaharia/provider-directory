@@ -97,7 +97,7 @@ export function UploadForm() {
     if (!csvFile && !pdfFile) {
       toast({
         title: "Error",
-        description: "Please upload a CSV or ZIP file",
+        description: "Please upload a CSV file or ZIP file",
         variant: "destructive",
       })
       return
@@ -105,55 +105,35 @@ export function UploadForm() {
 
     setIsUploading(true)
 
+    // Show progress notification immediately
+    toast({
+      title: "Upload in Progress",
+      description: "Your file is being processed. Click the loader at the top to view detailed progress.",
+    })
+
     try {
       const formData = new FormData()
-      // Prioritize ZIP if both are present, otherwise use whichever is available
-      const fileToUpload = pdfFile || csvFile
-      if (!fileToUpload) {
-        throw new Error("No file to upload")
-      }
-      formData.append("file", fileToUpload)
-
-      // Use XMLHttpRequest for upload progress tracking
-      const xhr = new XMLHttpRequest()
       
-      // Track upload progress
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100
-          // Update UI with upload progress (you can add a progress bar here if needed)
-          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`)
-        }
+      // If ZIP file is uploaded, use it; otherwise use CSV
+      if (pdfFile) {
+        formData.append("file", pdfFile)
+        formData.append("type", "zip")
+      } else if (csvFile) {
+        formData.append("file", csvFile)
+        formData.append("type", "csv")
+      }
+
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
       })
 
-      const uploadPromise = new Promise<{ upload_id: string }>((resolve, reject) => {
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText)
-              resolve(data)
-            } catch (e) {
-              reject(new Error("Invalid response"))
-            }
-          } else {
-            try {
-              const err = JSON.parse(xhr.responseText)
-              reject(new Error(err?.error || "Upload failed"))
-            } catch {
-              reject(new Error("Upload failed"))
-            }
-          }
-        })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err?.error || "Upload failed")
+      }
 
-        xhr.addEventListener("error", () => {
-          reject(new Error("Network error"))
-        })
-
-        xhr.open("POST", "/api/uploads")
-        xhr.send(formData)
-      })
-
-      const data = await uploadPromise
+      const data = await res.json()
       setIsUploading(false)
       toast({ title: "Upload started", description: "Validation running... Redirecting to progress." })
       router.push(`/uploads/${data.upload_id}/progress`)
@@ -169,7 +149,7 @@ export function UploadForm() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-card-foreground">CSV File Upload</CardTitle>
-            <CardDescription>Upload a CSV file containing provider information</CardDescription>
+            <CardDescription>Upload a CSV file containing provider information (required)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/20 p-12 transition-colors hover:border-primary/50">
@@ -279,26 +259,23 @@ export function UploadForm() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {csvFile && (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <span>CSV file ready</span>
+              </>
+            )}
             {pdfFile && (
               <>
                 <CheckCircle2 className="h-4 w-4 text-success" />
-                <span className="font-semibold">ZIP file ready</span>
-                {csvFile && <span className="mx-2">•</span>}
-              </>
-            )}
-            {csvFile && (
-              <>
-                {!pdfFile && <CheckCircle2 className="h-4 w-4 text-success" />}
-                <span className={pdfFile ? "" : "font-semibold"}>CSV file ready</span>
+                <span>ZIP file ready</span>
               </>
             )}
           </div>
-          {(csvFile || pdfFile) && (
-            <Button type="submit" disabled={isUploading} size="lg" className="gap-2">
-              <Upload className="h-4 w-4" />
-              {isUploading ? "Uploading..." : "Start Validation"}
-            </Button>
-          )}
+          <Button type="submit" disabled={(!csvFile && !pdfFile) || isUploading} size="lg" className="gap-2">
+            <Upload className="h-4 w-4" />
+            {isUploading ? "Uploading..." : "Start Validation"}
+          </Button>
         </div>
       </form>
       <Toaster />

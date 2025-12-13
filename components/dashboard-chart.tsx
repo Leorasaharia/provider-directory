@@ -1,64 +1,32 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import type { TrendPoint } from "@/lib/api-types"
 
-interface DashboardChartProps {
-  trends?: TrendPoint[]
-}
+const chartData = [
+  { day: "Mon", processed: 28 },
+  { day: "Tue", processed: 35 },
+  { day: "Wed", processed: 42 },
+  { day: "Thu", processed: 38 },
+  { day: "Fri", processed: 31 },
+  { day: "Sat", processed: 15 },
+  { day: "Sun", processed: 11 },
+]
 
 const chartConfig = {
   processed: {
-    label: "Processed",
+    label: "Providers Processed",
     color: "hsl(var(--primary))",
-  },
-  validated: {
-    label: "Validated",
-    color: "hsl(var(--success))",
-  },
-  flagged: {
-    label: "Flagged",
-    color: "hsl(var(--destructive))",
   },
 }
 
-export function DashboardChart({ trends }: DashboardChartProps) {
-  // Transform trends data for chart
-  const chartData = trends
-    ? trends.map((t) => {
-        const date = new Date(t.date)
-        return {
-          day: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-          processed: t.processed,
-          validated: t.validated,
-          flagged: t.flagged,
-        }
-      })
-    : []
-
-  if (chartData.length === 0) {
-    return (
-      <Card className="border-border bg-card">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">Providers Processed Per Day</CardTitle>
-          <CardDescription>Validation activity over time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            <p>No data available yet</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
+export function DashboardChart() {
   return (
     <Card className="border-border bg-card">
       <CardHeader>
         <CardTitle className="text-card-foreground">Providers Processed Per Day</CardTitle>
-        <CardDescription>Validation activity over time</CardDescription>
+        <CardDescription>Last 7 days of validation activity</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -74,10 +42,7 @@ export function DashboardChart({ trends }: DashboardChartProps) {
               />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Legend />
               <Bar dataKey="processed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="validated" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="flagged" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
