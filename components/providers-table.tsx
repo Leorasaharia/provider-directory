@@ -26,29 +26,73 @@ export function ProvidersTable() {
   useEffect(() => {
     async function loadProviders() {
       try {
-        // Fetch uploads, pick latest by started_at
+        // Fetch uploads, pick latest completed by started_at
         const ul = await fetch('/api/uploads')
         const uploads = await ul.json()
-        if (!uploads || uploads.length === 0) return
-        const latest = uploads.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())[0]
+        if (!uploads || uploads.length === 0) {
+          setProviders([])
+          return
+        }
+        
+        // Find the latest completed upload
+        const completed = uploads.filter((u: any) => u.status === 'completed')
+        if (completed.length === 0) {
+          setProviders([])
+          return
+        }
+        
+        const latest = completed.sort((a: any, b: any) => 
+          new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+        )[0]
+        
         const resp = await fetch(`/api/uploads/${latest.upload_id}/progress`)
         const data = await resp.json()
-        if (data && data.providers) {
-          // Map stored providers to the UI Provider shape (best-effort)
+        
+        if (data && data.providers && Array.isArray(data.providers)) {
+          // Map stored providers to the UI Provider shape
           const mapped = data.providers.map((p: any) => {
+            // Get data from report if available, otherwise from raw
+            const report = p.report
             const raw = p.raw || {}
+            
             const get = (keys: string[]) => {
               for (const k of keys) if (raw[k] || raw[k.toLowerCase()]) return raw[k] ?? raw[k.toLowerCase()]
               return ""
             }
-            const name = get(['name', 'provider_name', 'full_name']) || `Provider ${p.id}`
-            const npi = get(['npi', 'npi id', 'npi_id']) || ''
-            const specialty = get(['speciality', 'specialty', 'specialization']) || ''
-            const phoneOriginal = get(['phone no.', 'phone', 'phone_number', 'phone_no']) || ''
-            const phoneValidated = raw['phone_validated'] || raw['phone.validated'] || ''
-            const addressValidated = raw['address_validated'] || raw['address.validated'] || get(['address']) || ''
+            
+            // Use report data if available (more accurate)
+            let name = ''
+            let npi = ''
+            let specialty = ''
+            let phoneOriginal = ''
+            let phoneValidated = ''
+            let addressValidated = ''
+            
+            if (report && report.provider_input) {
+              name = report.provider_input.name || ''
+              npi = report.provider_input.npi || ''
+              specialty = report.provider_input.speciality || ''
+              phoneOriginal = report.provider_input.mobile_no || ''
+            } else {
+              // Fallback to raw data
+              name = get(['name', 'provider_name', 'full_name']) || `Provider ${p.id}`
+              npi = get(['npi', 'npi id', 'npi_id']) || ''
+              specialty = get(['speciality', 'specialty', 'specialization']) || ''
+              phoneOriginal = get(['phone no.', 'phone', 'phone_number', 'phone_no', 'mobile_no']) || ''
+            }
+            
+            // Get validated data from report output if available
+            if (report && report.provider_output) {
+              phoneValidated = report.provider_output.mobile_no?.value || ''
+              addressValidated = report.provider_output.address?.value || ''
+            } else {
+              phoneValidated = raw['phone_validated'] || raw['phone.validated'] || ''
+              addressValidated = raw['address_validated'] || raw['address.validated'] || get(['address']) || ''
+            }
+            
             const confidence = typeof p.confidence === 'number' ? p.confidence : 0
             const status = p.confidence == null ? 'unprocessed' : confidence >= 0.6 ? 'validated' : 'flagged'
+            
             return {
               id: p.id,
               name,
@@ -61,9 +105,12 @@ export function ProvidersTable() {
             }
           })
           setProviders(mapped)
+        } else {
+          setProviders([])
         }
       } catch (e) {
         console.error('Failed to load providers', e)
+        setProviders([])
       }
     }
     loadProviders()

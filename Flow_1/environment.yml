@@ -1,0 +1,17 @@
+name: provider-directory-flow1
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - fastapi==0.95.2
+    - uvicorn[standard]==0.22.0
+    - pydantic==2.2.3
+    - python-dotenv==1.0.0
+    - requests==2.31.0
+    - beautifulsoup4==4.12.2
+    - lxml==4.9.3
+    - rapidfuzz==2.15.1
+    # Optional - only if using Gemini document extraction
+    # - google-generativeai==0.2.0

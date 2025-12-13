@@ -45,7 +45,11 @@ export function UploadProgressCard({ upload, onCancel, onViewProviders }: Upload
             <div>
               <h3 className="font-semibold text-foreground">{upload.filename}</h3>
               <p className="text-sm text-muted-foreground">
-                {upload.processed_count} of {upload.total_providers} providers processed
+                {upload.total_providers === 0 
+                  ? upload.zip_file_count 
+                    ? `Processing ${upload.zip_file_count} PDF file${upload.zip_file_count > 1 ? 's' : ''} from ZIP...`
+                    : "Extracting providers from ZIP file..."
+                  : `${upload.processed_count} of ${upload.total_providers} providers processed`}
               </p>
             </div>
 

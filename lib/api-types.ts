@@ -13,6 +13,7 @@
   last_error: string | null
   eta_seconds: number | null
   avg_confidence?: number | null
+  zip_file_count?: number | null // Number of PDF files in ZIP (for ZIP uploads)
 }
 
 export interface ProviderInput {
