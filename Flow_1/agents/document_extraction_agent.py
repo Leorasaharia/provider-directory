@@ -87,16 +87,13 @@ Return ONLY the JSON array. No markdown. No explanation.
 
             providers: List[ProviderInput] = []
 
-            # Process all items (removed safety cap to avoid losing providers)
-            for item in raw:
+            for item in raw[:200]:  # safety cap
                 if not isinstance(item, dict):
                     continue
 
                 name = (item.get("name") or "").strip()
-                # Allow providers without name but use a placeholder to avoid data loss
                 if not name:
-                    name = f"Provider {len(providers) + 1}"  # Use placeholder instead of skipping
-                    print(f"[DocumentExtractionAgent] Warning: Provider at index {len(providers)} has no name, using placeholder")
+                    continue
 
                 providers.append(
                     ProviderInput(
@@ -109,7 +106,6 @@ Return ONLY the JSON array. No markdown. No explanation.
                     )
                 )
 
-            print(f"[DocumentExtractionAgent] Extracted {len(providers)} providers from PDF")
             return providers
 
         except Exception as e:

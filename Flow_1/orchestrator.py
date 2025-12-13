@@ -2,7 +2,7 @@
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from models import ProviderInput, ProviderOutput, ProviderReport, FieldWithConfidence
+from models import ProviderInput, ProviderOutput, ProviderReport
 from agents.data_validation_agent import DataValidationAgent
 from agents.quality_assurance_agent import QualityAssuranceAgent
 from agents.directory_management_agent import DirectoryManagementAgent
@@ -83,25 +83,8 @@ class Flow1Orchestrator:
                         "[Flow1Orchestrator] Error processing provider "
                         f"{provider.name} (NPI: {provider.npi}): {e}"
                     )
-                    # Create a failed report instead of None to preserve the provider
-                    failed_output = ProviderOutput(
-                        name=FieldWithConfidence(value=provider.name, confidence=0.0, note="Processing error"),
-                        npi=FieldWithConfidence(value=provider.npi, confidence=0.0, note="Processing error"),
-                        mobile_no=FieldWithConfidence(value=provider.mobile_no, confidence=0.0, note="Processing error"),
-                        address=FieldWithConfidence(value=provider.address, confidence=0.0, note="Processing error"),
-                        speciality=FieldWithConfidence(value=provider.speciality, confidence=0.0, note="Processing error"),
-                    )
-                    reports[idx] = ProviderReport(
-                        provider_input=provider,
-                        provider_output=failed_output,
-                        status="needs_review",
-                        reasons=[f"Processing error: {str(e)[:100]}"],
-                        priority_score=1.0,
-                        priority_level="HIGH",
-                    )
 
-        # Return all reports (no longer filtering None - all should have reports now)
-        return reports
+        return [r for r in reports if r is not None]
 
     def build_review_queue(self, reports: List[ProviderReport]) -> List[ProviderReport]:
         """
