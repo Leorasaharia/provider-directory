@@ -2,14 +2,13 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, FileText, FileArchive, CheckCircle2, Download, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useRouter, usePathname } from "next/navigation"
-import type { UploadJob } from "@/lib/api-types"
+import { useRouter } from "next/navigation"
 
 interface CSVPreview {
   headers: string[]
@@ -21,11 +20,8 @@ export function UploadForm() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const [currentUploadId, setCurrentUploadId] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
-  const pathname = usePathname()
-  const hasRedirectedRef = useRef(false)
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -101,7 +97,7 @@ export function UploadForm() {
     if (!csvFile && !pdfFile) {
       toast({
         title: "Error",
-        description: "Please upload a CSV file or ZIP file containing PDFs",
+        description: "Please upload a CSV or ZIP file",
         variant: "destructive",
       })
       return
@@ -111,104 +107,61 @@ export function UploadForm() {
 
     try {
       const formData = new FormData()
+      // Prioritize ZIP if both are present, otherwise use whichever is available
+      const fileToUpload = pdfFile || csvFile
+      if (!fileToUpload) {
+        throw new Error("No file to upload")
+      }
+      formData.append("file", fileToUpload)
+
+      // Use XMLHttpRequest for upload progress tracking
+      const xhr = new XMLHttpRequest()
       
-      // If ZIP file is uploaded, send it (it can contain PDFs)
-      if (pdfFile) {
-        formData.append("file", pdfFile)
-      } else if (csvFile) {
-        // Otherwise send CSV file
-        formData.append("file", csvFile)
-      }
-
-      const res = await fetch("/api/uploads", {
-        method: "POST",
-        body: formData,
+      // Track upload progress
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100
+          // Update UI with upload progress (you can add a progress bar here if needed)
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`)
+        }
       })
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err?.error || "Upload failed")
-      }
+      const uploadPromise = new Promise<{ upload_id: string }>((resolve, reject) => {
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText)
+              resolve(data)
+            } catch (e) {
+              reject(new Error("Invalid response"))
+            }
+          } else {
+            try {
+              const err = JSON.parse(xhr.responseText)
+              reject(new Error(err?.error || "Upload failed"))
+            } catch {
+              reject(new Error("Upload failed"))
+            }
+          }
+        })
 
-      const data = await res.json()
+        xhr.addEventListener("error", () => {
+          reject(new Error("Network error"))
+        })
+
+        xhr.open("POST", "/api/uploads")
+        xhr.send(formData)
+      })
+
+      const data = await uploadPromise
       setIsUploading(false)
-      setCurrentUploadId(data.upload_id)
-      hasRedirectedRef.current = false
-      toast({ 
-        title: "Upload started", 
-        description: "Validation running... Click the progress bar at the top to view progress." 
-      })
-      // Will poll and redirect automatically when completed (if user hasn't navigated away)
+      toast({ title: "Upload started", description: "Validation running... Redirecting to progress." })
+      router.push(`/uploads/${data.upload_id}/progress`)
     } catch (err: any) {
       setIsUploading(false)
-      setCurrentUploadId(null)
       toast({ title: "Upload failed", description: err?.message || String(err), variant: "destructive" })
     }
   }
-
-  // Poll upload status and redirect when completed (only if still on upload page)
-  useEffect(() => {
-    if (!currentUploadId) return
-
-    // Only poll if we're still on the upload page
-    if (pathname !== "/upload") {
-      return
-    }
-
-    // Check if user has already navigated away (clicked progress bar)
-    if (hasRedirectedRef.current) {
-      return
-    }
-
-    let pollInterval: NodeJS.Timeout | null = null
-    let isMounted = true
-
-    const checkUploadStatus = async () => {
-      try {
-        const response = await fetch(`/api/uploads/${currentUploadId}/progress`)
-        if (!response.ok) return
-
-        const upload: UploadJob = await response.json()
-
-        // If upload is completed and we're still on upload page, redirect
-        if (upload.status === "completed" && isMounted && pathname === "/upload" && !hasRedirectedRef.current) {
-          hasRedirectedRef.current = true
-          router.push(`/uploads/${currentUploadId}/progress`)
-          return
-        }
-
-        // If upload failed or is no longer processing, stop polling
-        if (upload.status === "failed" || upload.status === "completed") {
-          if (pollInterval) {
-            clearInterval(pollInterval)
-            pollInterval = null
-          }
-        }
-      } catch (error) {
-        console.error("Error checking upload status:", error)
-      }
-    }
-
-    // Start polling every 2 seconds
-    pollInterval = setInterval(checkUploadStatus, 2000)
-    checkUploadStatus() // Initial check
-
-    // Cleanup
-    return () => {
-      isMounted = false
-      if (pollInterval) {
-        clearInterval(pollInterval)
-      }
-    }
-  }, [currentUploadId, pathname, router])
-
-  // Reset upload ID when user navigates away
-  useEffect(() => {
-    if (pathname !== "/upload") {
-      setCurrentUploadId(null)
-      hasRedirectedRef.current = false
-    }
-  }, [pathname])
 
   return (
     <>
@@ -216,7 +169,7 @@ export function UploadForm() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-card-foreground">CSV File Upload</CardTitle>
-            <CardDescription>Upload a CSV file containing provider information (required)</CardDescription>
+            <CardDescription>Upload a CSV file containing provider information</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/20 p-12 transition-colors hover:border-primary/50">
@@ -326,23 +279,26 @@ export function UploadForm() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {csvFile && (
-              <>
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>CSV file ready</span>
-              </>
-            )}
             {pdfFile && (
               <>
                 <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>ZIP file ready</span>
+                <span className="font-semibold">ZIP file ready</span>
+                {csvFile && <span className="mx-2">•</span>}
+              </>
+            )}
+            {csvFile && (
+              <>
+                {!pdfFile && <CheckCircle2 className="h-4 w-4 text-success" />}
+                <span className={pdfFile ? "" : "font-semibold"}>CSV file ready</span>
               </>
             )}
           </div>
-          <Button type="submit" disabled={(!csvFile && !pdfFile) || isUploading} size="lg" className="gap-2">
-            <Upload className="h-4 w-4" />
-            {isUploading ? "Uploading..." : "Start Validation"}
-          </Button>
+          {(csvFile || pdfFile) && (
+            <Button type="submit" disabled={isUploading} size="lg" className="gap-2">
+              <Upload className="h-4 w-4" />
+              {isUploading ? "Uploading..." : "Start Validation"}
+            </Button>
+          )}
         </div>
       </form>
       <Toaster />

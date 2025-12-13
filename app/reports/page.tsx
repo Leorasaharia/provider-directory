@@ -44,13 +44,75 @@ export default function ReportsPage() {
     }
   }
 
-  const handleDownloadReport = (reportId: string) => {
+  const handleDownloadReport = async (reportId: string) => {
+    try {
     const report = reports?.find((r) => r.id === reportId)
-    if (report?.file_url) {
+      if (!report) {
+        toast({
+          title: "Error",
+          description: "Report not found.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (report.status !== "ready") {
+        toast({
+          title: "Report not ready",
+          description: "This report is still being processed. Please wait.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // If file_url is an API endpoint, fetch it
+      if (report.file_url && report.file_url.startsWith("/api/")) {
+        try {
+          const response = await fetch(report.file_url)
+          if (!response.ok) {
+            throw new Error("Download failed")
+          }
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement("a")
+          a.href = url
+          a.download = `${report.name}.${report.type}`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          toast({
+            title: "Download started",
+            description: `Downloading ${report.name}`,
+          })
+        } catch (error) {
+          console.error("Download error:", error)
+          toast({
+            title: "Download failed",
+            description: "Failed to download report. Please try again.",
+            variant: "destructive",
+          })
+        }
+      } else if (report.file_url) {
+        // External URL
       window.open(report.file_url, "_blank")
       toast({
         title: "Download started",
         description: `Downloading ${report.name}`,
+        })
+      } else {
+        toast({
+          title: "No download available",
+          description: "This report does not have a download link.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error downloading report:", error)
+      toast({
+        title: "Error",
+        description: "Failed to download report. Please try again.",
+        variant: "destructive",
       })
     }
   }
