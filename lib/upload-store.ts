@@ -17,7 +17,23 @@ type StoredUpload = UploadJob & {
   avg_confidence?: number | null
 }
 
-const uploads = new Map<string, StoredUpload>()
+/**
+ * Persist the in-memory store across hot reloads by keeping it on globalThis.
+ * This prevents data loss when navigating during dev.
+ */
+type UploadStoreSingleton = {
+  uploads: Map<string, StoredUpload>
+}
+
+const globalAny = globalThis as unknown as { __UPLOAD_STORE__?: UploadStoreSingleton }
+
+if (!globalAny.__UPLOAD_STORE__) {
+  globalAny.__UPLOAD_STORE__ = {
+    uploads: new Map<string, StoredUpload>(),
+  }
+}
+
+const uploads = globalAny.__UPLOAD_STORE__.uploads
 
 function makeId() {
   return `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
