@@ -75,11 +75,11 @@ export function ReportsBuilder({ onGenerate }: ReportsBuilderProps) {
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={handleGenerate} className="flex-1">
+          <Button type="button" onClick={handleGenerate} className="flex-1">
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
           </Button>
-          <Button variant="outline" onClick={() => onGenerate({ type: "csv", filters: { status: "flagged" } })}>
+          <Button type="button" variant="outline" onClick={() => onGenerate({ type: "csv", filters: { status: "flagged" } })}>
             <Download className="mr-2 h-4 w-4" />
             Quick Export Flagged
           </Button>
