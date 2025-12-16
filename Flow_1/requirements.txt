@@ -1,14 +1,18 @@
 # Provider-directory Flow_1 Python dependencies (inferred from code)
 # Install with: pip install -r Flow_1/requirements.txt
 
-fastapi==0.95.2
-uvicorn[standard]==0.22.0
-pydantic==2.2.3
-python-dotenv==1.0.0
-requests==2.31.0
-beautifulsoup4==4.12.2
-lxml==4.9.3
-rapidfuzz==2.15.1
+fastapi
+uvicorn
+pydantic
+python-dotenv
+requests
+beautifulsoup4
+lxml
+rapidfuzz
+bs4
+python-multipart
+pydantic
+requests
 
 # Optional: only required if you want Gemini (Google Generative AI) PDF extraction
 # google-generativeai==0.2.0
