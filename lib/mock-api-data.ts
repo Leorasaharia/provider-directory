@@ -109,6 +109,7 @@ export function generateMockFlaggedProviders(): FlaggedProvider[] {
       name: p.name,
       npi: p.npi,
       specialty: p.specialty,
+      mobile_no: p.phone.validated || p.phone.original || "",
       confidence: p.confidence,
       priority_score: Math.random() * 100,
       error_types:

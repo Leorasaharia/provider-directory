@@ -38,6 +38,8 @@ export function FlaggedProvidersTable({
             <TableHead>Provider</TableHead>
             <TableHead>NPI</TableHead>
             <TableHead>Specialty</TableHead>
+            <TableHead>Mobile (Original)</TableHead>
+            <TableHead>Mobile (Validated)</TableHead>
             <TableHead>Confidence</TableHead>
             <TableHead>Error Types</TableHead>
             <TableHead>Priority</TableHead>
@@ -50,6 +52,8 @@ export function FlaggedProvidersTable({
               <TableCell className="font-medium">{provider.name}</TableCell>
               <TableCell className="font-mono text-sm">{provider.npi}</TableCell>
               <TableCell>{provider.specialty}</TableCell>
+              <TableCell className="font-mono text-sm">{provider.mobile_no_original || "-"}</TableCell>
+              <TableCell className="font-mono text-sm">{provider.mobile_no_validated || "-"}</TableCell>
               <TableCell>
                 <ConfidenceBadge confidence={provider.confidence} />
               </TableCell>

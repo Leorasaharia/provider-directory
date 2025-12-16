@@ -1,16 +1,37 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { mockProviders, type Provider } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ConfidenceBadge } from "@/components/confidence-badge"
 import { CheckCircle2, X, AlertTriangle, ChevronDown, ChevronUp, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { usePolling } from "@/hooks/use-polling"
+
+interface ReviewProvider {
+  id: string
+  name: string
+  npi: string
+  specialty: string
+  phone: {
+    original: string
+    validated: string
+  }
+  address: {
+    original: string
+    validated: string
+  }
+  confidence: number
+  status: "flagged"
+  lastUpdated: string
+  sources: string[]
+  priority_score: number
+  error_types: string[]
+}
 
 interface ReviewItemProps {
-  provider: Provider
+  provider: ReviewProvider
   onAccept: (id: string) => void
   onReject: (id: string) => void
 }
@@ -108,28 +129,71 @@ function ReviewItem({ provider, onAccept, onReject }: ReviewItemProps) {
 export function ReviewQueue() {
   const { toast } = useToast()
   const [processedIds, setProcessedIds] = useState<Set<string>>(new Set())
+  
+  const { data: reviewData, loading } = usePolling<{ providers: ReviewProvider[] }>("/api/review", 10000)
 
   const flaggedProviders = useMemo(() => {
-    return mockProviders
-      .filter((p) => p.status === "flagged" && !processedIds.has(p.id))
-      .sort((a, b) => a.confidence - b.confidence) // Lower confidence = higher priority
-  }, [processedIds])
+    if (!reviewData?.providers) return []
+    return reviewData.providers
+      .filter((p) => !processedIds.has(p.id))
+      .sort((a, b) => {
+        // Sort by confidence (lower first) then priority score (higher first)
+        if (a.confidence !== b.confidence) return a.confidence - b.confidence
+        return b.priority_score - a.priority_score
+      })
+  }, [reviewData, processedIds])
 
-  const handleAccept = (id: string) => {
-    setProcessedIds((prev) => new Set(prev).add(id))
-    toast({
-      title: "Changes accepted",
-      description: "Provider information has been updated.",
-    })
+  const handleAccept = async (id: string) => {
+    try {
+      const response = await fetch(`/api/review/${id}/accept`, { method: "POST" })
+      if (!response.ok) throw new Error("Failed to accept")
+      
+      setProcessedIds((prev) => new Set(prev).add(id))
+      toast({
+        title: "Changes accepted",
+        description: "Provider information has been updated.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to accept changes. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleReject = (id: string) => {
-    setProcessedIds((prev) => new Set(prev).add(id))
-    toast({
-      title: "Changes rejected",
-      description: "Original provider information retained.",
-      variant: "destructive",
-    })
+  const handleReject = async (id: string) => {
+    try {
+      const response = await fetch(`/api/review/${id}/reject`, { method: "POST" })
+      if (!response.ok) throw new Error("Failed to reject")
+      
+      setProcessedIds((prev) => new Set(prev).add(id))
+      toast({
+        title: "Changes rejected",
+        description: "Original provider information retained.",
+        variant: "destructive",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reject changes. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading && !reviewData) {
+    return (
+      <Card className="border-border bg-card">
+        <CardContent className="py-12">
+          <div className="animate-pulse space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-secondary rounded" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -144,8 +208,10 @@ export function ReviewQueue() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  flaggedProviders.forEach((p) => handleAccept(p.id))
+                onClick={async () => {
+                  for (const provider of flaggedProviders) {
+                    await handleAccept(provider.id)
+                  }
                 }}
               >
                 Accept All

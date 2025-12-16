@@ -37,6 +37,7 @@ export function ProvidersTable() {
           // Map stored providers to the UI Provider shape (best-effort)
           const mapped = data.providers.map((p: any) => {
             const raw = p.raw || {}
+            const report = p.report || {}
             const get = (keys: string[]) => {
               for (const k of keys) if (raw[k] || raw[k.toLowerCase()]) return raw[k] ?? raw[k.toLowerCase()]
               return ""
@@ -44,9 +45,24 @@ export function ProvidersTable() {
             const name = get(['name', 'provider_name', 'full_name']) || `Provider ${p.id}`
             const npi = get(['npi', 'npi id', 'npi_id']) || ''
             const specialty = get(['speciality', 'specialty', 'specialization']) || ''
-            const phoneOriginal = get(['phone no.', 'phone', 'phone_number', 'phone_no']) || ''
-            const phoneValidated = raw['phone_validated'] || raw['phone.validated'] || ''
-            const addressValidated = raw['address_validated'] || raw['address.validated'] || get(['address']) || ''
+            
+            // Get phone original from raw data or report input
+            const phoneOriginal = get(['phone no.', 'phone', 'phone_number', 'phone_no', 'mobile_no', 'mobile']) || 
+                                 report.provider_input?.mobile_no || 
+                                 report.provider_input?.phone || 
+                                 ''
+            
+            // Get phone validated from report output, or fallback to original
+            const phoneValidated = report.provider_output?.mobile_no?.value || 
+                                 report.provider_output?.phone?.value ||
+                                 phoneOriginal || 
+                                 ''
+            
+            const addressValidated = report.provider_output?.address?.value || 
+                                   raw['address_validated'] || 
+                                   raw['address.validated'] || 
+                                   get(['address']) || 
+                                   ''
             const confidence = typeof p.confidence === 'number' ? p.confidence : 0
             const status = p.confidence == null ? 'unprocessed' : confidence >= 0.6 ? 'validated' : 'flagged'
             return {
@@ -58,6 +74,9 @@ export function ProvidersTable() {
               address: { validated: addressValidated },
               confidence,
               status,
+              email: get(['email', 'email_address']) || '',
+              lastUpdated: new Date().toISOString(),
+              sources: ['NPI Registry', 'Provider Directory'],
             }
           })
           setProviders(mapped)
@@ -183,22 +202,22 @@ export function ProvidersTable() {
               </thead>
               <tbody>
                 {filteredAndSortedProviders.map((provider) => (
-                  <tr
-                    key={provider.id}
-                    onClick={() => setSelectedProvider(provider)}
-                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-secondary/50"
-                  >
-                    <td className="px-4 py-3 font-medium text-foreground">{provider.name}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{provider.npi}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{provider.specialty}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{provider.phone.original}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{provider.phone.validated}</td>
-                    <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">{provider.address.validated}</td>
-                    <td className="px-4 py-3">
-                      <ConfidenceBadge confidence={provider.confidence} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={provider.status} />
+                    <tr
+                      key={provider.id}
+                      onClick={() => setSelectedProvider(provider)}
+                      className="cursor-pointer border-b border-border/50 transition-colors hover:bg-secondary/50"
+                    >
+                      <td className="px-4 py-3 font-medium text-foreground">{provider.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{provider.npi}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{provider.specialty}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{provider.phone.original}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{provider.phone.validated}</td>
+                      <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">{provider.address.validated}</td>
+                      <td className="px-4 py-3">
+                        <ConfidenceBadge confidence={provider.confidence} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={provider.status} />
                     </td>
                   </tr>
                 ))}

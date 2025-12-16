@@ -2,13 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, FileText, FileArchive, CheckCircle2, Download, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import type { UploadJob } from "@/lib/api-types"
 
 interface CSVPreview {
   headers: string[]
@@ -20,8 +21,11 @@ export function UploadForm() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [currentUploadId, setCurrentUploadId] = useState<string | null>(null)
+  const hasNavigatedRef = useRef(false)
   const { toast } = useToast()
   const router = useRouter()
+  const pathname = usePathname()
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -94,10 +98,10 @@ export function UploadForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!csvFile) {
+    if (!csvFile && !pdfFile) {
       toast({
         title: "Error",
-        description: "Please upload a CSV file",
+        description: "Please upload a CSV file or ZIP file",
         variant: "destructive",
       })
       return
@@ -105,9 +109,23 @@ export function UploadForm() {
 
     setIsUploading(true)
 
+    // Show progress notification immediately
+    toast({
+      title: "Upload in Progress",
+      description: "Your file is being processed. Click the loader at the top to view detailed progress.",
+    })
+
     try {
       const formData = new FormData()
-      formData.append("file", csvFile)
+      
+      // If ZIP file is uploaded, use it; otherwise use CSV
+      if (pdfFile) {
+        formData.append("file", pdfFile)
+        formData.append("type", "zip")
+      } else if (csvFile) {
+        formData.append("file", csvFile)
+        formData.append("type", "csv")
+      }
 
       const res = await fetch("/api/uploads", {
         method: "POST",
@@ -121,13 +139,90 @@ export function UploadForm() {
 
       const data = await res.json()
       setIsUploading(false)
-      toast({ title: "Upload started", description: "Validation running... Redirecting to progress." })
-      router.push(`/uploads/${data.upload_id}/progress`)
+      setCurrentUploadId(data.upload_id)
+      hasNavigatedRef.current = false
+      
+      // For ZIP files, check immediately if already completed (they process synchronously)
+      if (pdfFile) {
+        // Check status immediately for ZIP files since they complete synchronously
+        setTimeout(async () => {
+          try {
+            if (pathname !== "/upload" || hasNavigatedRef.current) return
+            
+            const statusResponse = await fetch(`/api/uploads/${data.upload_id}/progress`)
+            if (statusResponse.ok) {
+              const uploadStatus: UploadJob = await statusResponse.json()
+              if (uploadStatus.status === "completed" && pathname === "/upload" && !hasNavigatedRef.current) {
+                hasNavigatedRef.current = true
+                router.push(`/uploads/${data.upload_id}/progress`)
+              }
+            }
+          } catch (error) {
+            console.error("Failed to check ZIP upload status:", error)
+          }
+        }, 500) // Check after 500ms to allow backend to finish processing
+      }
+      
+      toast({ 
+        title: "Upload started", 
+        description: "Validation running... Click the progress loader at the top to view detailed progress." 
+      })
     } catch (err: any) {
       setIsUploading(false)
       toast({ title: "Upload failed", description: err?.message || String(err), variant: "destructive" })
     }
   }
+
+  // Poll for upload completion and navigate if user hasn't clicked the loader
+  useEffect(() => {
+    if (!currentUploadId || hasNavigatedRef.current) return
+
+    let timeoutId: NodeJS.Timeout
+    let isMounted = true
+
+    const checkUploadStatus = async () => {
+      try {
+        // Only check if we're still on the upload page
+        if (pathname !== "/upload") {
+          isMounted = false
+          return
+        }
+
+        const response = await fetch(`/api/uploads/${currentUploadId}/progress`)
+        if (!response.ok) return
+
+        const upload: UploadJob = await response.json()
+        
+        // If upload completed or failed, and user hasn't navigated yet and is still on upload page, navigate to progress page
+        if ((upload.status === "completed" || upload.status === "failed") && isMounted && !hasNavigatedRef.current && pathname === "/upload") {
+          hasNavigatedRef.current = true
+          router.push(`/uploads/${currentUploadId}/progress`)
+          return
+        }
+
+        // Continue polling if still processing
+        if (upload.status === "processing" || upload.status === "queued") {
+          timeoutId = setTimeout(checkUploadStatus, 3000)
+        }
+      } catch (error) {
+        console.error("Failed to check upload status:", error)
+        // Retry after a delay
+        if (isMounted && pathname === "/upload") {
+          timeoutId = setTimeout(checkUploadStatus, 3000)
+        }
+      }
+    }
+
+    // Start polling immediately (don't wait 3 seconds for first check, especially for ZIP files)
+    checkUploadStatus()
+
+    return () => {
+      isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [currentUploadId, router, pathname])
 
   return (
     <>
@@ -251,8 +346,14 @@ export function UploadForm() {
                 <span>CSV file ready</span>
               </>
             )}
+            {pdfFile && (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <span>ZIP file ready</span>
+              </>
+            )}
           </div>
-          <Button type="submit" disabled={!csvFile || isUploading} size="lg" className="gap-2">
+          <Button type="submit" disabled={(!csvFile && !pdfFile) || isUploading} size="lg" className="gap-2">
             <Upload className="h-4 w-4" />
             {isUploading ? "Uploading..." : "Start Validation"}
           </Button>

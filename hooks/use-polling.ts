@@ -24,7 +24,17 @@ export function usePolling<T>(url: string, interval = 5000, enabled = true) {
 
     const fetchData = async () => {
       try {
-        const response = await fetch(url)
+        // Add cache-busting query parameter to prevent stale data
+        const separator = url.includes('?') ? '&' : '?'
+        const cacheBustUrl = `${url}${separator}_t=${Date.now()}`
+        
+        const response = await fetch(cacheBustUrl, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        })
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }

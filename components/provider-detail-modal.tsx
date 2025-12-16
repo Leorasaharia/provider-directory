@@ -85,7 +85,7 @@ export function ProviderDetailModal({ provider, onClose }: ProviderDetailModalPr
   const handleSendEmail = () => {
     toast({
       title: "Email sent",
-      description: `Verification email sent to ${provider.email}`,
+      description: `Verification email sent to ${provider.email || "provider"}`,
     })
   }
 
@@ -112,7 +112,7 @@ export function ProviderDetailModal({ provider, onClose }: ProviderDetailModalPr
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm text-foreground">{provider.email}</p>
+                <p className="text-sm text-foreground">{provider.email || "-"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Last Updated</p>
@@ -147,7 +147,7 @@ export function ProviderDetailModal({ provider, onClose }: ProviderDetailModalPr
             <div className="rounded-lg border border-border bg-card p-4">
               <h4 className="mb-3 text-sm font-medium text-foreground">Data Sources</h4>
               <div className="flex flex-wrap gap-2">
-                {provider.sources.map((source) => (
+                {(provider.sources || []).map((source) => (
                   <Button key={source} variant="outline" size="sm" className="gap-2 bg-transparent">
                     {source}
                     <ExternalLink className="h-3 w-3" />
